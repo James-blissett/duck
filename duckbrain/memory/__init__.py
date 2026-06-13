@@ -1,5 +1,33 @@
 """Memory: per-resident profiles + rolling session summaries (SQLite).
 
-Populated in Stages 1 and 3. Profiles and summaries are injected into the
-system prompt. Empty by design in Stage 0.
+Profiles (display name + active facts) and recent session summaries are injected
+into the conversation system prompt so each chat builds on the last. The
+:class:`MemoryStore` owns the SQLite database and provides full CRUD plus
+right-to-erasure (:meth:`MemoryStore.delete_resident_completely`).
 """
+
+from duckbrain.memory.store import (
+    ConsentStatus,
+    Fact,
+    MemoryStore,
+    Resident,
+    ResidentProfile,
+    Role,
+    Session,
+    SessionSummary,
+    TranscriptTurn,
+)
+from duckbrain.memory.summariser import summarise
+
+__all__ = [
+    "ConsentStatus",
+    "Fact",
+    "MemoryStore",
+    "Resident",
+    "ResidentProfile",
+    "Role",
+    "Session",
+    "SessionSummary",
+    "TranscriptTurn",
+    "summarise",
+]

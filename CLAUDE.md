@@ -1,6 +1,6 @@
 # Companion Duck — Brain
 
-**Current stage: Stage 0 (Scaffold) — complete.** Update this line as you progress.
+**Current stage: Spec 1 (Text brain) — complete.** Update this line as you progress.
 
 ## Project purpose
 

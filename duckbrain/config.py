@@ -29,6 +29,15 @@ class Settings(BaseSettings):
     stt_model_path: Path = Field(default=Path("models/parakeet"))
     tts_model_path: Path = Field(default=Path("models/kokoro"))
 
+    # --- LLM backend (OpenAI-compatible local endpoint: litert-lm serve,
+    # llama.cpp server, or Ollama; swap by changing base URL/model) ---
+    llm_base_url: str = Field(default="http://127.0.0.1:8080")
+    llm_model: str = Field(default="gemma-4-e2b")
+
+    # --- Persona ---
+    duck_name: str = Field(default="Waddles")
+    handoff_phrase: str = Field(default="I'll let the staff know you'd like a hand.")
+
     # --- Audio device IDs (sounddevice indices; None = system default) ---
     input_device: int | None = Field(default=None)
     output_device: int | None = Field(default=None)
@@ -39,6 +48,11 @@ class Settings(BaseSettings):
 
     # --- Local data directory (resident profiles, conversation logs) ---
     data_dir: Path = Field(default=Path("data"))
+
+    @property
+    def db_path(self) -> Path:
+        """Path to the per-resident memory SQLite database."""
+        return self.data_dir / "memory.db"
 
 
 @lru_cache(maxsize=1)

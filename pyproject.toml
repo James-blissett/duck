@@ -5,6 +5,7 @@ description = "Companion Duck brain: on-device conversational companion robot fo
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "httpx>=0.27",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
     "websockets>=13.0",
@@ -45,3 +46,9 @@ disallow_untyped_decorators = false
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# The persona red-team eval suite hits a live model and is flaky by nature;
+# deselect it from the default unit run. Run it explicitly with `make eval`.
+addopts = "-m 'not eval'"
+markers = [
+    "eval: live-model persona red-team evals (deselected by default; run via `make eval`)",
+]

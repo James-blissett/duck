@@ -1,4 +1,4 @@
-.PHONY: setup test lint format run-chat run-voice
+.PHONY: setup test eval lint format run-chat run-voice
 
 # Stage 0 entry points. Models are NOT downloaded in this stage.
 
@@ -7,6 +7,10 @@ setup:
 
 test:
 	uv run pytest
+
+# Persona red-team evals against a live model (flaky; skips if no server).
+eval:
+	uv run pytest -m eval
 
 lint:
 	uv run ruff check .

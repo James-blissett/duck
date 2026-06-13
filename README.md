@@ -14,13 +14,19 @@ hard safety requirements, and coding standards.
 make setup      # uv sync (fetches Python 3.11 + deps; no models downloaded)
 make test       # pytest
 make lint       # ruff check + ruff format --check + mypy --strict
-make run-chat   # Stage 1 entry point (stub)
+make eval       # persona red-team evals against a live model (flaky; skips if no server)
+make run-chat   # text chat: pick/create a resident, chat, /end
 make run-voice  # Stage 2 entry point (stub)
 ```
 
-Copy `.env.example` to `.env` to override configuration (`DUCK_` prefix).
+Copy `.env.example` to `.env` to override configuration (`DUCK_` prefix). The
+chat loop talks to a locally served, OpenAI-compatible model endpoint
+(`litert-lm serve`, `llama.cpp` server, or Ollama) at `DUCK_LLM_BASE_URL`.
 
 ## Status
 
-**Stage 0 (Scaffold) — complete.** Repo runs, deps install, `make test` green.
-Next: Stage 1 (text brain — typed chat with persona + per-resident memory).
+**Spec 1 (Text brain) — complete.** Typed streaming chat against a local
+Gemma 4 E2B endpoint, with the companion-duck persona and per-resident SQLite
+memory (profiles, facts, sessions, summaries, transcripts) injected into the
+system prompt. `make test` green; persona red-team suite runs via `make eval`.
+Next: Stage 2 (voice loop — VAD/STT/TTS).
