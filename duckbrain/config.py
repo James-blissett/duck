@@ -29,10 +29,17 @@ class Settings(BaseSettings):
     stt_model_path: Path = Field(default=Path("models/parakeet"))
     tts_model_path: Path = Field(default=Path("models/kokoro"))
 
-    # --- LLM backend (OpenAI-compatible local endpoint: litert-lm serve,
-    # llama.cpp server, or Ollama; swap by changing base URL/model) ---
-    llm_base_url: str = Field(default="http://127.0.0.1:8080")
-    llm_model: str = Field(default="gemma-4-e2b")
+    # --- LLM backend (OpenAI-compatible local endpoint: Ollama by default;
+    # also works with litert-lm serve or llama.cpp server — swap base URL/model) ---
+    llm_base_url: str = Field(default="http://127.0.0.1:11434")
+    llm_model: str = Field(default="gemma3:4b")
+
+    # When the backend is Ollama, the brain can start the server and download the
+    # model on first run so the operator does nothing. Disable to point at an
+    # already-running endpoint (litert-lm serve, llama.cpp) you manage yourself.
+    llm_auto_bootstrap: bool = Field(default=True)
+    # Optional explicit path to the ``ollama`` binary; auto-discovered if unset.
+    ollama_bin: Path | None = Field(default=None)
 
     # --- Persona ---
     duck_name: str = Field(default="Waddles")

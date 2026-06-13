@@ -28,3 +28,29 @@ Where I will write the reasoning and logic behind project decisions, for later r
   by the resident's session ids first, then sessions/facts/residents — covered by
   a test asserting zero rows across every table (right-to-erasure).
 
+## Zero-touch model bootstrap (follow-up to Spec 1)
+
+- **Default backend is Ollama**, serving **Gemma 3** (`gemma3:4b`), at
+  `http://127.0.0.1:11434`. Chosen because it runs Gemma 3 on Apple Silicon with
+  Metal out of the box and exposes the OpenAI-compatible endpoint our client
+  already speaks. (Production target on the Jetson remains LiteRT-LM; swap via
+  `DUCK_LLM_BASE_URL`/`DUCK_LLM_MODEL` + `DUCK_LLM_AUTO_BOOTSTRAP=false`.)
+- **`duckbrain/llm/bootstrap.py` makes startup zero-touch**: finds the `ollama`
+  binary (explicit path → PATH → vendored), starts `ollama serve` if nothing is
+  listening, and pulls the model via `/api/pull` with streamed progress if it is
+  not present. Gated by `DUCK_LLM_AUTO_BOOTSTRAP` so it never interferes with a
+  self-managed endpoint.
+- **Ollama vendored headlessly** at `~/.local/share/duck/ollama/` from the
+  official `ollama-darwin.tgz` (no Homebrew, no GUI app, no admin) so the
+  operator installs nothing.
+- **The spawned server is not a daemon.** `_start_server` runs `ollama serve` as
+  a child of the CLI (no `start_new_session`), and `ensure_ready` returns the
+  process so the CLI stops it in a `finally` on exit (`stop_server`). This trades
+  a slower first message each run (model reloads into the GPU) for the guarantee
+  that no multi-GB model server lingers in the background. We only stop a server
+  we started — if one was already running, `ensure_ready` returns `None` and
+  leaves it untouched.
+- The model download is the only first-run cost (~3.3 GB for `gemma3:4b`); the
+  binary discovery and pull-progress parsing are unit-tested with
+  `httpx.MockTransport` (no network).
+

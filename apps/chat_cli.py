@@ -13,16 +13,54 @@ This is an executable entry point; the importable library lives in
 from __future__ import annotations
 
 import asyncio
+import subprocess
 import sys
 
 import httpx
 
 from duckbrain.config import Settings, get_settings
+from duckbrain.llm.bootstrap import BootstrapError, PullProgress, ensure_ready, stop_server
 from duckbrain.llm.client import ChatMessage, LLMClient, OpenAICompatibleClient
 from duckbrain.llm.persona import build_system_prompt
 from duckbrain.memory.store import MemoryStore, Resident, Role
 
 _END_COMMAND = "/end"
+
+
+def _render_pull_progress(progress: PullProgress) -> None:
+    """Render model-download progress on a single updating line."""
+    percent = progress.percent
+    if percent is None:
+        sys.stdout.write(f"\r  {progress.status}".ljust(60))
+    else:
+        sys.stdout.write(f"\r  {progress.status}: {percent:5.1f}%".ljust(60))
+    sys.stdout.flush()
+
+
+async def _bootstrap_model(
+    settings: Settings,
+) -> tuple[bool, subprocess.Popen[bytes] | None]:
+    """Make the model server + model ready.
+
+    Returns ``(ok, server)`` where ``server`` is the process this run started (to
+    be stopped on exit) or ``None`` if a server was already running.
+    """
+    if not settings.llm_auto_bootstrap:
+        return True, None
+    try:
+        server = await ensure_ready(
+            settings.llm_base_url,
+            settings.llm_model,
+            ollama_bin=settings.ollama_bin,
+            on_status=print,
+            on_progress=_render_pull_progress,
+        )
+    except BootstrapError as exc:
+        print(f"\n{exc}")
+        return False, None
+    else:
+        print()  # finish any progress line
+        return True, server
 
 
 def _prompt(text: str) -> str:
@@ -115,6 +153,9 @@ async def _run_session(
 
 async def _main_async() -> None:
     settings = get_settings()
+    ok, server = await _bootstrap_model(settings)
+    if not ok:
+        return
     client = OpenAICompatibleClient(base_url=settings.llm_base_url, model=settings.llm_model)
     try:
         with MemoryStore(settings.db_path) as store:
@@ -122,6 +163,10 @@ async def _main_async() -> None:
             await _run_session(store, client, settings, resident)
     finally:
         await client.aclose()
+        # Stop the model server we started so it never lingers in the background.
+        if server is not None:
+            stop_server(server)
+            print("Stopped the local model server.")
 
 
 def main() -> None:
