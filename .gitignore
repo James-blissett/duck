@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# uv
+uv.lock.bak
+
+# Environment / local config
+.env
+
+# Project data (resident profiles, logs) and downloaded models — never commit
+data/
+models/
+*.sqlite
+*.db
